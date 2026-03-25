@@ -310,7 +310,7 @@
         }
 
         function addNote() {
-            data.notes.push({ title: '', desc: '', link: '', date: '', tags: [] });
+            data.notes.push({ title: '', desc: '', link: '', date: '', tags: [], content: '' });
             renderNotes();
         }
 
@@ -330,22 +330,31 @@
         // ========== 通用卡片模板 ==========
         function itemCard(type, i, item) {
             const fn = type === 'work' ? 'Work' : 'Note';
-            return '<div class="item-card">' +
+            let html = '<div class="item-card">' +
                 '<div class="item-header">' +
                     '<span class="item-num">#' + (i + 1) + '</span>' +
                     '<button class="btn btn-danger" onclick="remove' + fn + '(' + i + ')">删除</button>' +
                 '</div>' +
                 '<label>标题</label>' +
                 '<input type="text" value="' + esc(item.title) + '" onchange="update' + fn + '(' + i + ',\'title\',this.value)">' +
-                '<label>描述</label>' +
-                '<textarea onchange="update' + fn + '(' + i + ',\'desc\',this.value)">' + esc(item.desc) + '</textarea>' +
-                '<label>链接（可选，填网址或文件名如 notes/my-note.html）</label>' +
-                '<input type="text" value="' + esc(item.link) + '" onchange="update' + fn + '(' + i + ',\'link\',this.value)">' +
-                '<label>日期（可选）</label>' +
+                '<label>简短描述 (显示在首页卡片上)</label>' +
+                '<textarea onchange="update' + fn + '(' + i + ',\'desc\',this.value)">' + esc(item.desc) + '</textarea>';
+                
+            // 如果是笔记，增加长篇内容输入框
+            if (type === 'note') {
+                html += '<label style="color: var(--accent);">📝 笔记正文内容 (支持 Markdown 语法，可以写很长，用于详情页展示)</label>' +
+                '<textarea style="min-height: 200px; font-family: monospace; background: rgba(0,0,0,0.2);" placeholder="# 标题\n\n正文内容...\n\n![图片](图片链接)" onchange="update' + fn + '(' + i + ',\'content\',this.value)">' + esc(item.content || '') + '</textarea>';
+            } else {
+                html += '<label>外部链接（可选，填网址）</label>' +
+                '<input type="text" value="' + esc(item.link) + '" onchange="update' + fn + '(' + i + ',\'link\',this.value)">';
+            }
+                
+            html += '<label>日期（可选）</label>' +
                 '<input type="text" value="' + esc(item.date) + '" placeholder="2026-03-25" onchange="update' + fn + '(' + i + ',\'date\',this.value)">' +
                 '<label>标签（可选，用逗号分隔）</label>' +
                 '<input type="text" value="' + esc((item.tags || []).join(', ')) + '" onchange="update' + fn + '(' + i + ',\'tags\',this.value)">' +
                 '</div>';
+            return html;
         }
 
         // ========== 保存 / 导出 / 导入 ==========

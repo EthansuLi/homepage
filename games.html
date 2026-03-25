@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏厅 - MySpace</title>
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --bg-card: rgba(30, 30, 35, 0.8);
+            --text-main: #f0f0f0;
+            --accent: #ff758f;
+            --accent-2: #845ef7;
+        }
+        body {
+            margin: 0; padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+        /* 导航栏 */
+        .navbar {
+            padding: 16px 40px;
+            background: rgba(10, 10, 26, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+        }
+        .navbar a { color: #fff; text-decoration: none; font-weight: bold; }
+        
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        h1 { text-align: center; margin-bottom: 40px; color: var(--accent); }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+        .game-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            transition: transform 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        .game-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+            box-shadow: 0 10px 20px rgba(255, 117, 143, 0.1);
+        }
+        .game-icon { font-size: 4rem; margin-bottom: 16px; }
+        .game-title { font-size: 1.5rem; margin-bottom: 8px; font-weight: bold; }
+        .game-desc { color: #888; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html">← 返回主页</a>
+    </nav>
+
+    <div class="container">
+        <h1>🎮 欢迎来到哈基米游戏厅</h1>
+        <div class="game-grid">
+            <a href="game-snake.html" class="game-card">
+                <div class="game-icon">🐍</div>
+                <div class="game-title">贪吃蛇</div>
+                <div class="game-desc">经典的像素风贪吃蛇，考验你的手速。</div>
+            </a>
+            <a href="game-minesweeper.html" class="game-card">
+                <div class="game-icon">💣</div>
+                <div class="game-title">扫雷</div>
+                <div class="game-desc">Windows经典复刻，测测你的逻辑推理。</div>
+            </a>
+            <a href="game-gomoku.html" class="game-card">
+                <div class="game-icon">⚫⚪</div>
+                <div class="game-title">五子棋 (人机)</div>
+                <div class="game-desc">和简单的人工智能对弈一局吧！</div>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

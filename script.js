@@ -87,12 +87,19 @@ function renderCards(items, containerId) {
     const grid = document.getElementById(containerId);
     if (!grid || !items || !items.length) return;
 
-    grid.innerHTML = items.map(item => {
+    grid.innerHTML = items.map((item, index) => {
         let html = '<div class="card fade-in">';
         if (item.date) html += '<div class="card-date">' + item.date + '</div>';
         if (item.title) html += '<h3>' + item.title + '</h3>';
         if (item.desc) html += '<p>' + item.desc + '</p>';
-        if (item.link) html += '<a class="card-link" href="' + item.link + '" target="_blank">查看 →</a>';
+        
+        // 判断如果是笔记，则跳转到新的 note.html 并带上 id 参数；如果是作品则按原样处理
+        if (containerId === 'notesGrid') {
+            html += '<a class="card-link" href="note.html?id=' + index + '">阅读全文 →</a>';
+        } else if (item.link) {
+            html += '<a class="card-link" href="' + item.link + '" target="_blank">查看 →</a>';
+        }
+
         if (item.tags && item.tags.length) {
             html += '<div class="card-tags">' +
                 item.tags.map(t => '<span class="card-tag">' + t + '</span>').join('') +
@@ -217,6 +224,119 @@ const observer = new IntersectionObserver((entries) => {
     });
 }, { threshold: 0.15 });
 
+// ========== 弹幕留言逻辑 ==========
+let danmakuList = [
+    "前排占座！",
+    "博主太强了吧！",
+    "膜拜大佬~",
+    "这界面太好看了",
+    "哈基米哈基米",
+    "学习了！",
+    "二次元浓度过高警告"
+];
+
+function initDanmaku() {
+    const container = document.getElementById('danmaku-container');
+    if (!container) return;
+    container.innerHTML = ''; // 清空提示
+    
+    // 从 localStorage 加载历史留言（真实场景需后端数据库，这里仅做纯前端模拟）
+    try {
+        const saved = localStorage.getItem('site_danmaku');
+        if (saved) {
+            danmakuList = danmakuList.concat(JSON.parse(saved));
+        }
+    } catch(e){}
+
+    // 随机发射初始弹幕
+    danmakuList.forEach((text, i) => {
+        setTimeout(() => createDanmaku(text), Math.random() * 5000 + i * 800);
+    });
+}
+
+function createDanmaku(text, isNew = false) {
+    const container = document.getElementById('danmaku-container');
+    if (!container) return;
+
+    const el = document.createElement('div');
+    el.textContent = text;
+    el.style.position = 'absolute';
+    el.style.whiteSpace = 'nowrap';
+    el.style.fontSize = (Math.random() * 8 + 14) + 'px';
+    el.style.fontWeight = 'bold';
+    el.style.textShadow = '1px 1px 2px rgba(0,0,0,0.8)';
+    
+    // 如果是新发送的弹幕，加上方框高亮
+    if (isNew) {
+        el.style.border = '2px solid var(--accent)';
+        el.style.padding = '4px 10px';
+        el.style.borderRadius = '8px';
+        el.style.backgroundColor = 'rgba(255, 117, 143, 0.2)';
+        el.style.zIndex = '10'; // 保证新弹幕在最上层
+    }
+    
+    // 随机好看的颜色
+    const colors = ['#ff758f', '#845ef7', '#3bc9db', '#fcc419', '#51cf66', '#ff922b', '#ffffff'];
+    el.style.color = colors[Math.floor(Math.random() * colors.length)];
+    
+    // 随机高度 (10% 到 85%)
+    el.style.top = (Math.random() * 75 + 10) + '%';
+    // 初始位置在最右侧外面
+    el.style.left = '100%';
+    
+    container.appendChild(el);
+
+    // 降低动画速度，让弹幕更平滑、更慢
+    const speed = Math.random() * 0.8 + 0.5; // 之前是 3~5，现在调慢到 0.5~1.3
+    let pos = 100;
+    
+    function move() {
+        pos -= speed / 5; // 之前除以10，现在微调移动步长
+        el.style.left = pos + '%';
+        if (pos < -50) { // 移出屏幕左侧后销毁
+            el.remove();
+            // 循环发射（新发的弹幕不需要循环发射，避免满屏都是框框）
+            if (!isNew) {
+                setTimeout(() => createDanmaku(text), Math.random() * 8000 + 3000);
+            }
+        } else {
+            requestAnimationFrame(move);
+        }
+    }
+    move();
+}
+
+// 确保函数暴露在全局作用域，以便 HTML 中的 onclick="sendDanmaku()" 能够调用
+window.sendDanmaku = function() {
+    const input = document.getElementById('danmakuInput');
+    const text = input.value.trim();
+    if (!text) return;
+    
+    // 发射当前这条弹幕，并标记为 isNew = true
+    createDanmaku(text, true);
+    
+    // 保存到列表和本地
+    danmakuList.push(text);
+    try {
+        const saved = JSON.parse(localStorage.getItem('site_danmaku') || '[]');
+        saved.push(text);
+        localStorage.setItem('site_danmaku', JSON.stringify(saved));
+    } catch(e){}
+    
+    input.value = '';
+};
+
+// 监听回车发送
+document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('danmakuInput');
+    if(input) {
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendDanmaku();
+        });
+    }
+});
+
+
 // ========== 初始化 ==========
 document.addEventListener('DOMContentLoaded', () => {
     const data = loadData();
@@ -229,6 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
     createParticles();
     setupCursorParticles();
     setupNav();
+    initDanmaku();
 
     document.querySelectorAll('.card, .section').forEach(el => {
         el.classList.add('fade-in');
