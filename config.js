@@ -1,7 +1,7 @@
 window.SITE_DATA = {
   "profile": {
     "name": "EthansuLi",
-    "bio": "SEU EE 硕士 -------> 数字芯片设计工程师",
+    "bio": "SEU EE 硕士 -------> 数字芯片设计工程师\n目前专攻ISP数字芯片设计\n技术栈：Verilog 、AMBA总线、SOC、SystemVerilog、Python、Makefile\n主做方向：图像处理，硬件视觉算法、显示驱动、缓存控制、高频Video DMA设计、Xilinx FPGA开发\n邮箱：l2568606131@outlook.com\nVX：yungterli",
     "avatar": "",
     "links": [
       {

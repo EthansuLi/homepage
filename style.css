@@ -176,10 +176,12 @@ a {
 }
 
 .bio {
-    font-size: 1rem;
+    font-size: 1.05rem;
     color: var(--text-light);
-    max-width: 500px;
+    max-width: 600px; /* 稍微加宽一点以适应多段落 */
     margin: 0 auto 24px;
+    line-height: 1.8; /* 增加行高，让多段落阅读更舒适 */
+    text-align: center; /* 也可以考虑改成 left，取决于你想要的效果，这里保持居中 */
 }
 
 .social-links {

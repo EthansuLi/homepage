@@ -64,7 +64,10 @@ function renderProfile(data) {
     const p = data.profile;
 
     if (p.name) document.getElementById('myName').textContent = p.name;
-    if (p.bio) document.getElementById('myBio').textContent = p.bio;
+    if (p.bio) {
+        // 将换行符 \n 替换为 HTML 的 <br> 标签，从而支持多行显示
+        document.getElementById('myBio').innerHTML = p.bio.replace(/\n/g, '<br>');
+    }
     
     // 如果没有上传自定义头像，则默认使用本地的高清二次元头像
     const avatarUrl = p.avatar || 'avatar.jpg';
