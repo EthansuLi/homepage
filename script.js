@@ -233,7 +233,7 @@ function setupNav() {
     setInterval(updateTime, 1000);
 }
 
-// ========== 实时时间 ==========
+// ========== 实时时间与专注时钟 ==========
 function updateTime() {
     const timeEl = document.getElementById('currentTime');
     if (!timeEl) return;
@@ -249,8 +249,47 @@ function updateTime() {
     const days = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
     const day = days[now.getDay()];
 
+    // 更新导航栏小时间
     timeEl.textContent = `${year}-${month}-${date} ${hours}:${minutes}:${seconds} ${day}`;
+    
+    // 更新专注模式大时钟
+    if (isFocusMode) {
+        const hEl = document.getElementById('focus-hours');
+        const mEl = document.getElementById('focus-minutes');
+        const sEl = document.getElementById('focus-seconds');
+        const dEl = document.getElementById('focusDate');
+        
+        if (hEl) hEl.textContent = hours;
+        if (mEl) mEl.textContent = minutes;
+        if (sEl) sEl.textContent = seconds;
+        if (dEl) dEl.textContent = `${year}年 ${month}月 ${date}日  ${day}`;
+    }
 }
+
+// ========== 专注模式 ==========
+let isFocusMode = false;
+
+function toggleFocusMode() {
+    const focusEl = document.getElementById('focusMode');
+    if (!focusEl) return;
+    
+    isFocusMode = !isFocusMode;
+    if (isFocusMode) {
+        focusEl.classList.remove('hidden');
+        // 进入全屏 (可选，如果浏览器支持且用户允许)
+        try { document.documentElement.requestFullscreen(); } catch(e) {}
+    } else {
+        focusEl.classList.add('hidden');
+        try { if(document.fullscreenElement) document.exitFullscreen(); } catch(e) {}
+    }
+}
+
+// 按 Esc 退出专注模式
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isFocusMode) {
+        toggleFocusMode();
+    }
+});
 
 // ========== 滚动渐入 ==========
 const observer = new IntersectionObserver((entries) => {

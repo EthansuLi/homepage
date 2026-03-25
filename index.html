@@ -7,6 +7,19 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- 专注模式时钟遮罩 -->
+    <div id="focusMode" class="focus-mode hidden">
+        <button class="exit-focus-btn" onclick="toggleFocusMode()">退出专注模式 (Esc)</button>
+        <div class="focus-clock-container">
+            <div class="focus-time-unit" id="focus-hours">00</div>
+            <div class="focus-time-sep">:</div>
+            <div class="focus-time-unit" id="focus-minutes">00</div>
+            <div class="focus-time-sep">:</div>
+            <div class="focus-time-unit" id="focus-seconds">00</div>
+        </div>
+        <div class="focus-date" id="focusDate"></div>
+    </div>
+
     <!-- 动态视频背景 -->
     <video class="bg-video" autoplay loop muted playsinline>
         <source src="bg.mp4" type="video/mp4">
@@ -17,7 +30,7 @@
     <nav class="navbar" id="mainNav">
         <div class="nav-logo">
             There's a 哈基米 on your lawn
-            <div id="currentTime" class="nav-time"></div>
+            <div id="currentTime" class="nav-time" onclick="toggleFocusMode()" title="点击进入专注模式"></div>
         </div>
         <ul class="nav-links">
             <li><a href="#home">首页</a></li>

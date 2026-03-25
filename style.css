@@ -102,6 +102,13 @@ a {
     color: rgba(255, 255, 255, 0.7);
     margin-top: 2px;
     letter-spacing: 0;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.nav-time:hover {
+    color: #fff;
+    text-decoration: underline;
 }
 
 .nav-links {
@@ -347,6 +354,88 @@ a {
 .fade-in.visible {
     opacity: 1;
     transform: translateY(0);
+}
+
+/* ========== 专注模式 (全屏时钟) ========== */
+.focus-mode {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: #000; /* 纯黑背景，极致专注 */
+    z-index: 9999; /* 覆盖所有元素 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.5s ease, visibility 0.5s;
+    opacity: 1;
+    visibility: visible;
+}
+
+.focus-mode.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.exit-focus-btn {
+    position: absolute;
+    top: 30px;
+    right: 40px;
+    background: transparent;
+    color: rgba(255,255,255,0.3);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+}
+
+.exit-focus-btn:hover {
+    color: #fff;
+    border-color: rgba(255,255,255,0.8);
+    background: rgba(255,255,255,0.1);
+}
+
+.focus-clock-container {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.focus-time-unit {
+    color: #fff;
+    font-size: 14rem; /* 超大字体 */
+    font-weight: bold;
+    font-family: 'Courier New', Courier, monospace;
+    text-shadow: 0 0 40px rgba(255,255,255,0.2); /* 轻微发光效果 */
+    line-height: 1;
+}
+
+.focus-time-sep {
+    font-size: 10rem;
+    color: #888;
+    line-height: 1;
+    margin-top: -2rem; /* 微调冒号的垂直居中 */
+    animation: blink 1s infinite;
+}
+
+.focus-date {
+    margin-top: 50px;
+    font-size: 2.5rem;
+    color: #888;
+    letter-spacing: 4px;
+    font-weight: 300;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+@media (max-width: 768px) {
+    .focus-time-unit { font-size: 6rem; }
+    .focus-time-sep { font-size: 5rem; margin-top: -1rem; }
+    .focus-date { font-size: 1.2rem; margin-top: 30px; }
 }
 
 /* ========== 响应式 ========== */
