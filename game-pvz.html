@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>植物大战僵尸 - MySpace</title>
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --text-main: #f0f0f0;
+            --accent: #51cf66;
+        }
+        body {
+            margin: 0; padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .navbar {
+            width: 100%;
+            padding: 16px 40px;
+            background: rgba(10, 10, 26, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            box-sizing: border-box;
+        }
+        .navbar a { color: #fff; text-decoration: none; font-weight: bold; }
+        
+        h1 { margin: 15px 0 5px; color: var(--accent); font-size: 1.5rem; }
+        
+        .game-container {
+            position: relative;
+            margin-top: 10px;
+            background: #87CEEB; /* 天空蓝底色 */
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            overflow: hidden;
+            border: 4px solid #4a3018;
+        }
+        
+        canvas {
+            display: block;
+            cursor: pointer;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .overlay.hidden { display: none; }
+        
+        .overlay h2 { font-size: 3rem; color: #ff4d4d; margin-bottom: 20px; text-shadow: 2px 2px 4px #000; }
+        
+        button {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        button:hover { background: #40c057; transform: translateY(-2px); }
+
+        .hint { margin-top: 10px; color: #aaa; font-size: 0.9rem; text-align: center;}
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="games.html">← 返回游戏厅</a>
+    </nav>
+
+    <h1>🌻 植物大战僵尸 (Canvas简易版)</h1>
+
+    <div class="game-container">
+        <canvas id="gameCanvas" width="900" height="600"></canvas>
+        <div id="gameOverOverlay" class="overlay hidden">
+            <h2>僵尸吃掉了你的脑子！</h2>
+            <button onclick="startGame()">重新开始</button>
+        </div>
+        <div id="startOverlay" class="overlay">
+            <h2 style="color: #51cf66;">准备好保卫家园了吗？</h2>
+            <button onclick="startGame()">开始游戏</button>
+        </div>
+    </div>
+    
+    <div class="hint">点击上方卡牌选择植物，然后点击草坪种植。收集阳光购买植物！</div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const startOverlay = document.getElementById('startOverlay');
+        const gameOverOverlay = document.getElementById('gameOverOverlay');
+
+        // 常量设置
+        const CELL_W = 80;
+        const CELL_H = 100;
+        const ROWS = 5;
+        const COLS = 9;
+        const OFFSET_X = 140; // 左侧留出空间给除草机
+        const OFFSET_Y = 85;  // 上方留出空间给卡槽
+
+        // 游戏状态
+        let sunCount = 50;
+        let plants = [];
+        let zombies = [];
+        let peas = [];
+        let suns = [];
+        let mowers = [];
+        let particles = []; // 用于樱桃炸弹爆炸效果
+        let frameCount = 0;
+        let score = 0;
+        let gameOver = false;
+        let isPlaying = false;
+        let nextZombieFrame = 1500;
+        let zombieSpawnRate = 1800;
+
+        // 植物卡牌配置
+        const seedBank = [
+            { type: 'sunflower', name: '向日葵', cost: 50, cdMax: 450, cdTimer: 0, emoji: '🌻', color: '#ffd43b' },
+            { type: 'peashooter', name: '豌豆射手', cost: 100, cdMax: 450, cdTimer: 0, emoji: '🌱', color: '#51cf66' },
+            { type: 'wallnut', name: '坚果墙', cost: 50, cdMax: 1800, cdTimer: 0, emoji: '🥔', color: '#d9480f' },
+            { type: 'cherrybomb', name: '樱桃炸弹', cost: 150, cdMax: 2400, cdTimer: 0, emoji: '🍒', color: '#fa5252' }
+        ];
+        let selectedCard = null; // 当前选中的卡牌索引
+
+        // 初始化游戏
+        function startGame() {
+            sunCount = 50;
+            plants = [];
+            zombies = [];
+            peas = [];
+            suns = [];
+            mowers = [];
+            particles = [];
+            frameCount = 0;
+            score = 0;
+            gameOver = false;
+            isPlaying = true;
+            nextZombieFrame = 1500; // 25秒后出第一个僵尸 (假设60fps)
+            zombieSpawnRate = 1800; // 初始30秒出一个僵尸
+            selectedCard = null;
+
+            // 重置卡槽CD
+            seedBank.forEach(s => s.cdTimer = 0);
+
+            // 初始化除草机
+            for (let r = 0; r < ROWS; r++) {
+                mowers.push({ row: r, x: OFFSET_X - 60, y: OFFSET_Y + r * CELL_H + 40, active: false, used: false });
+            }
+
+            startOverlay.classList.add('hidden');
+            gameOverOverlay.classList.add('hidden');
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 游戏主循环
+        function gameLoop() {
+            if (!isPlaying) return;
+
+            update();
+            draw();
+
+            if (!gameOver) {
+                requestAnimationFrame(gameLoop);
+            } else {
+                gameOverOverlay.classList.remove('hidden');
+            }
+        }
+
+        // --- 核心逻辑更新 ---
+        function update() {
+            frameCount++;
+
+            // 卡槽CD冷却
+            seedBank.forEach(seed => {
+                if (seed.cdTimer > 0) seed.cdTimer--;
+            });
+
+            // 1. 自然掉落阳光 (大约每20秒一个，第一次在10秒时掉落)
+            if (frameCount % 1200 === 600) {
+                let tx = OFFSET_X + Math.random() * (COLS * CELL_W - 50);
+                let ty = OFFSET_Y + 100 + Math.random() * (ROWS * CELL_H - 100);
+                suns.push({ x: tx, y: -50, targetY: ty, life: 600, vy: 2, value: 25 });
+            }
+
+            // 2. 更新阳光
+            for (let i = suns.length - 1; i >= 0; i--) {
+                let s = suns[i];
+                if (s.y < s.targetY) {
+                    s.y += s.vy;
+                } else {
+                    s.life--;
+                    if (s.life <= 0) {
+                        suns.splice(i, 1);
+                        continue;
+                    }
+                }
+            }
+
+            // 3. 更新植物 (产阳光、射击、爆炸)
+            for (let i = plants.length - 1; i >= 0; i--) {
+                let p = plants[i];
+                if (p.hp <= 0) {
+                    plants.splice(i, 1);
+                    continue;
+                }
+                
+                p.timer++;
+
+                if (p.type === 'sunflower') {
+                    if (p.timer >= 1440) { // 每24秒产一次阳光
+                        suns.push({
+                            x: p.x + CELL_W/2 - 15 + Math.random()*30, 
+                            y: p.y + CELL_H/2, 
+                            targetY: p.y + CELL_H - 20, 
+                            life: 600, vy: 1, value: 25
+                        });
+                        p.timer = 0;
+                    }
+                } else if (p.type === 'peashooter') {
+                    // 检测本行右侧是否有僵尸
+                    let hasZombie = zombies.some(z => z.row === p.row && z.x > p.x && z.x < canvas.width);
+                    if (hasZombie && p.timer >= 90) { // 1.5秒射一次
+                        peas.push({ x: p.x + CELL_W - 20, y: p.y + 25, row: p.row, speed: 5, damage: 20 });
+                        p.timer = 0;
+                    }
+                } else if (p.type === 'cherrybomb') {
+                    if (p.timer >= 60) { // 1秒后爆炸
+                        // 3x3 范围伤害
+                        zombies.forEach(z => {
+                            if (Math.abs(z.row - p.row) <= 1 && Math.abs((z.x + 30) - (p.x + CELL_W/2)) <= CELL_W * 1.5) {
+                                z.hp -= 1800; // 秒杀普通和路障，能炸死铁桶
+                            }
+                        });
+                        // 爆炸特效
+                        particles.push({ x: p.x + CELL_W/2, y: p.y + CELL_H/2, life: 30, maxLife: 30 });
+                        p.hp = 0; // 炸完消失
+                    }
+                }
+            }
+
+            // 4. 更新子弹
+            for (let i = peas.length - 1; i >= 0; i--) {
+                let pea = peas[i];
+                pea.x += pea.speed;
+                let hit = false;
+                
+                // 碰撞检测 (找到同一行最前面的僵尸)
+                let target = null;
+                for (let z of zombies) {
+                    if (z.row === pea.row && z.x < pea.x + 10 && z.x + 40 > pea.x && z.hp > 0) {
+                        target = z;
+                        break;
+                    }
+                }
+
+                if (target) {
+                    target.hp -= pea.damage;
+                    hit = true;
+                    // 受击闪烁效果(简单处理，通过修改颜色或缩放，这里略过复杂动画，直接扣血)
+                }
+
+                if (hit || pea.x > canvas.width) {
+                    peas.splice(i, 1);
+                }
+            }
+
+            // 5. 更新僵尸
+            if (frameCount >= nextZombieFrame) {
+                spawnZombie();
+                // 难度递增，每次出怪减少1帧间隔，最快10秒一个怪
+                zombieSpawnRate = Math.max(600, zombieSpawnRate - 1);
+                nextZombieFrame = frameCount + zombieSpawnRate;
+            }
+
+            for (let i = zombies.length - 1; i >= 0; i--) {
+                let z = zombies[i];
+                if (z.hp <= 0) {
+                    zombies.splice(i, 1);
+                    score += 10;
+                    continue;
+                }
+
+                // 吃植物检测
+                let eating = false;
+                for (let p of plants) {
+                    if (p.row === z.row && Math.abs(p.x - z.x) < 40) {
+                        eating = true;
+                        p.hp -= 0.5; // 僵尸每帧造成 0.5 伤害 (30 DPS)
+                        break;
+                    }
+                }
+
+                z.isEating = eating;
+                if (!eating) {
+                    z.x -= z.speed;
+                }
+
+                // 进屋判定
+                if (z.x < OFFSET_X - CELL_W) {
+                    gameOver = true;
+                }
+            }
+
+            // 6. 更新除草机
+            for (let m of mowers) {
+                if (m.used) continue;
+                if (!m.active) {
+                    // 触发检测
+                    let trigger = zombies.some(z => z.row === m.row && z.x < m.x + 40);
+                    if (trigger) m.active = true;
+                } else {
+                    m.x += 8;
+                    // 秒杀碰到的僵尸
+                    zombies.forEach(z => {
+                        if (z.row === m.row && z.x < m.x + 50 && z.x > m.x - 20) {
+                            z.hp = 0;
+                        }
+                    });
+                    if (m.x > canvas.width) m.used = true;
+                }
+            }
+
+            // 7. 更新爆炸粒子
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].life--;
+                if (particles[i].life <= 0) particles.splice(i, 1);
+            }
+        }
+
+        function spawnZombie() {
+            let row = Math.floor(Math.random() * ROWS);
+            let type = 'basic';
+            let r = Math.random();
+            // 随时间增加高级僵尸概率
+            if (frameCount > 3600) { // 1分钟后
+                if (r < 0.2) type = 'bucket';
+                else if (r < 0.5) type = 'cone';
+            } else if (frameCount > 1800) { // 30秒后
+                if (r < 0.3) type = 'cone';
+            }
+
+            let hp = 200, speed = 0.15; // 进一步降低基础速度
+            if (type === 'cone') hp = 560;
+            if (type === 'bucket') hp = 1300;
+            
+            // 稍微随机化速度
+            speed += (Math.random() - 0.5) * 0.02;
+
+            zombies.push({
+                row: row,
+                x: canvas.width,
+                y: OFFSET_Y + row * CELL_H,
+                hp: hp,
+                maxHp: hp,
+                speed: speed,
+                type: type,
+                isEating: false
+            });
+        }
+
+        // --- 渲染逻辑 ---
+        function draw() {
+            // 清空画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. 画草坪 (深浅绿交替)
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    ctx.fillStyle = (r + c) % 2 === 0 ? '#4caf50' : '#388e3c';
+                    ctx.fillRect(OFFSET_X + c * CELL_W, OFFSET_Y + r * CELL_H, CELL_W, CELL_H);
+                }
+            }
+            // 画房子边缘 (左侧)
+            ctx.fillStyle = '#5c4033';
+            ctx.fillRect(0, OFFSET_Y, OFFSET_X, ROWS * CELL_H);
+            ctx.fillStyle = '#8b5a2b';
+            ctx.fillRect(OFFSET_X - 10, OFFSET_Y, 10, ROWS * CELL_H);
+
+            // 2. 画除草机
+            ctx.font = '35px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            for (let m of mowers) {
+                if (!m.used) {
+                    ctx.fillText('🚜', m.x + 30, m.y);
+                }
+            }
+
+            // 3. 画植物
+            for (let p of plants) {
+                // 如果是樱桃炸弹，爆炸前变大
+                if (p.type === 'cherrybomb') {
+                    let scale = 1 + (p.timer / 60) * 0.5;
+                    ctx.font = Math.floor(40 * scale) + 'px Arial';
+                } else {
+                    ctx.font = '40px Arial';
+                }
+                
+                // 植物受损提示 (闪烁或变透明)
+                if (p.hp < p.maxHp * 0.3) ctx.globalAlpha = 0.6;
+                ctx.fillText(getPlantEmoji(p.type), p.x + CELL_W/2, p.y + CELL_H/2);
+                ctx.globalAlpha = 1.0;
+
+                // 坚果墙画个血条
+                if (p.type === 'wallnut' && p.hp < p.maxHp) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                    ctx.fillRect(p.x + 10, p.y + CELL_H - 15, CELL_W - 20, 6);
+                    ctx.fillStyle = p.hp > p.maxHp/2 ? '#51cf66' : '#fa5252';
+                    ctx.fillRect(p.x + 10, p.y + CELL_H - 15, (CELL_W - 20) * (p.hp / p.maxHp), 6);
+                }
+            }
+
+            // 4. 画僵尸
+            for (let z of zombies) {
+                ctx.font = '40px Arial';
+                // 僵尸走动时的轻微上下抖动
+                let yOffset = z.isEating ? 0 : Math.sin(frameCount * 0.1) * 3;
+                ctx.fillText('🧟', z.x + 30, z.y + CELL_H/2 + yOffset);
+                
+                // 饰品 (路障 / 铁桶)
+                if (z.type === 'cone' && z.hp > 200) {
+                    ctx.fillStyle = '#ff922b'; // 橙色路障
+                    ctx.beginPath();
+                    ctx.moveTo(z.x + 30, z.y + 10 + yOffset);
+                    ctx.lineTo(z.x + 15, z.y + 40 + yOffset);
+                    ctx.lineTo(z.x + 45, z.y + 40 + yOffset);
+                    ctx.fill();
+                    ctx.strokeStyle = '#d9480f';
+                    ctx.stroke();
+                } else if (z.type === 'bucket' && z.hp > 200) {
+                    ctx.fillStyle = '#adb5bd'; // 灰色铁桶
+                    ctx.fillRect(z.x + 15, z.y + 15 + yOffset, 30, 25);
+                    ctx.fillStyle = '#868e96';
+                    ctx.fillRect(z.x + 12, z.y + 35 + yOffset, 36, 5);
+                }
+
+                // 僵尸血条 (仅受伤显示)
+                if (z.hp < z.maxHp) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                    ctx.fillRect(z.x + 10, z.y + CELL_H - 10, 40, 5);
+                    ctx.fillStyle = '#fa5252';
+                    ctx.fillRect(z.x + 10, z.y + CELL_H - 10, 40 * Math.max(0, z.hp / z.maxHp), 5);
+                }
+            }
+
+            // 5. 画子弹
+            ctx.fillStyle = '#a9e34b';
+            for (let pea of peas) {
+                ctx.beginPath();
+                ctx.arc(pea.x, pea.y, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#51cf66';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            // 6. 画阳光
+            ctx.font = '30px Arial';
+            for (let s of suns) {
+                ctx.save();
+                ctx.translate(s.x, s.y);
+                // 旋转动画
+                ctx.rotate(frameCount * 0.02);
+                ctx.fillText('☀️', 0, 0);
+                ctx.restore();
+            }
+
+            // 7. 画爆炸特效
+            for (let pt of particles) {
+                let radius = 100 * (1 - pt.life / pt.maxLife);
+                let alpha = pt.life / pt.maxLife;
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(250, 82, 82, ${alpha})`;
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, radius * 0.7, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 212, 59, ${alpha})`;
+                ctx.fill();
+            }
+
+            // 8. 画顶部 UI (卡槽)
+            ctx.fillStyle = '#664229'; // 木板底色
+            ctx.fillRect(10, 10, 450, 65);
+            ctx.strokeStyle = '#3e2723';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(10, 10, 450, 65);
+
+            // 阳光数显示
+            ctx.fillStyle = '#fff9db';
+            ctx.fillRect(20, 20, 70, 45);
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 20px Arial';
+            ctx.fillText(sunCount, 55, 42);
+            ctx.font = '24px Arial';
+            ctx.fillText('☀️', 25, 42);
+
+            // 卡牌
+            for (let i = 0; i < seedBank.length; i++) {
+                let card = seedBank[i];
+                let cx = 110 + i * 80;
+                let cy = 15;
+                
+                // 卡牌背景
+                let canAfford = sunCount >= card.cost;
+                ctx.fillStyle = canAfford ? card.color : '#868e96';
+                ctx.fillRect(cx, cy, 70, 55);
+                
+                // 选中高亮
+                if (selectedCard === i) {
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(cx - 2, cy - 2, 74, 59);
+                } else {
+                    ctx.strokeStyle = '#212529';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(cx, cy, 70, 55);
+                }
+
+                // 绘制图标和阳光消耗
+                ctx.font = '28px Arial';
+                ctx.fillText(card.emoji, cx + 35, cy + 25);
+                
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillRect(cx, cy + 35, 70, 20);
+                ctx.fillStyle = canAfford ? '#fff' : '#ffc9c9';
+                ctx.font = '14px Arial';
+                ctx.fillText(card.cost, cx + 35, cy + 45);
+
+                // 冷却遮罩
+                if (card.cdTimer > 0) {
+                    let h = (card.cdTimer / card.cdMax) * 55;
+                    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                    ctx.fillRect(cx, cy, 70, h);
+                }
+            }
+
+            // 分数
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText(`得分: ${score}`, canvas.width - 20, 40);
+
+            // 绘制跟随鼠标的半透明植物 (预览种植)
+            if (selectedCard !== null) {
+                let card = seedBank[selectedCard];
+                let rect = canvas.getBoundingClientRect();
+                if (mouseX > OFFSET_X && mouseX < OFFSET_X + COLS * CELL_W &&
+                    mouseY > OFFSET_Y && mouseY < OFFSET_Y + ROWS * CELL_H) {
+                    
+                    let c = Math.floor((mouseX - OFFSET_X) / CELL_W);
+                    let r = Math.floor((mouseY - OFFSET_Y) / CELL_H);
+                    
+                    ctx.globalAlpha = 0.5;
+                    ctx.font = '40px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(card.emoji, OFFSET_X + c * CELL_W + CELL_W/2, OFFSET_Y + r * CELL_H + CELL_H/2);
+                    ctx.globalAlpha = 1.0;
+                }
+            }
+        }
+
+        function getPlantEmoji(type) {
+            let s = seedBank.find(s => s.type === type);
+            return s ? s.emoji : '❓';
+        }
+
+        // --- 交互处理 ---
+        let mouseX = 0, mouseY = 0;
+        
+        canvas.addEventListener('mousemove', e => {
+            let rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+        });
+
+        canvas.addEventListener('mousedown', e => {
+            if (!isPlaying || gameOver) return;
+            
+            let rect = canvas.getBoundingClientRect();
+            let x = e.clientX - rect.left;
+            let y = e.clientY - rect.top;
+
+            // 1. 尝试收集阳光
+            for (let i = suns.length - 1; i >= 0; i--) {
+                let s = suns[i];
+                if (Math.hypot(s.x - x, s.y - y) < 40) { // 点击范围
+                    sunCount += s.value;
+                    suns.splice(i, 1);
+                    return; // 收集阳光优先，阻止其他操作
+                }
+            }
+
+            // 2. 尝试选择卡牌
+            if (y >= 15 && y <= 70) {
+                for (let i = 0; i < seedBank.length; i++) {
+                    let cx = 110 + i * 80;
+                    if (x >= cx && x <= cx + 70) {
+                        let card = seedBank[i];
+                        if (sunCount >= card.cost && card.cdTimer <= 0) {
+                            // 切换选择
+                            selectedCard = selectedCard === i ? null : i;
+                        } else {
+                            // 无法选择 (钱不够或CD中)
+                            selectedCard = null;
+                        }
+                        return;
+                    }
+                }
+            }
+
+            // 3. 尝试种植植物
+            if (selectedCard !== null) {
+                if (x >= OFFSET_X && x < OFFSET_X + COLS * CELL_W &&
+                    y >= OFFSET_Y && y < OFFSET_Y + ROWS * CELL_H) {
+                    
+                    let c = Math.floor((x - OFFSET_X) / CELL_W);
+                    let r = Math.floor((y - OFFSET_Y) / CELL_H);
+                    
+                    // 检查是否已有植物
+                    let occupied = plants.some(p => p.row === r && p.col === c);
+                    if (!occupied) {
+                        let card = seedBank[selectedCard];
+                        sunCount -= card.cost;
+                        card.cdTimer = card.cdMax;
+                        
+                        plants.push({
+                            row: r, col: c,
+                            x: OFFSET_X + c * CELL_W,
+                            y: OFFSET_Y + r * CELL_H,
+                            type: card.type,
+                            hp: card.type === 'wallnut' ? 4000 : 300,
+                            maxHp: card.type === 'wallnut' ? 4000 : 300,
+                            timer: 0
+                        });
+                        
+                        selectedCard = null; // 种完取消选择
+                    }
+                } else {
+                    // 点到草坪外，取消选择
+                    selectedCard = null;
+                }
+            }
+        });
+
+        // 初始画一次背景
+        ctx.fillStyle = '#87CEEB';
+        ctx.fillRect(0,0,canvas.width, canvas.height);
+    </script>
+</body>
+</html>

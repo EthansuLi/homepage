@@ -69,6 +69,17 @@ function renderProfile(data) {
         document.getElementById('myBio').innerHTML = p.bio.replace(/\n/g, '<br>');
     }
     
+    // 设置导航栏自定义背景图
+    if (p.navBg) {
+        const navEl = document.getElementById('mainNav');
+        if (navEl) {
+            navEl.style.backgroundImage = 'url("' + p.navBg + '")';
+            // 如果图片颜色较浅，可以调整这里让背景变暗以保证文字清晰
+            navEl.style.backgroundColor = 'rgba(10, 10, 26, 0.4)'; 
+            navEl.style.backgroundBlendMode = 'overlay';
+        }
+    }
+    
     // 如果没有上传自定义头像，则默认使用本地的高清二次元头像
     const avatarUrl = p.avatar || 'avatar.jpg';
     const el = document.getElementById('avatar');
@@ -210,11 +221,35 @@ function setupCursorParticles() {
 function setupNav() {
     const toggle = document.getElementById('navToggle');
     const links = document.querySelector('.nav-links');
-    if (!toggle || !links) return;
-    toggle.addEventListener('click', () => links.classList.toggle('active'));
-    links.querySelectorAll('a').forEach(a =>
-        a.addEventListener('click', () => links.classList.remove('active'))
-    );
+    if (toggle && links) {
+        toggle.addEventListener('click', () => links.classList.toggle('active'));
+        links.querySelectorAll('a').forEach(a =>
+            a.addEventListener('click', () => links.classList.remove('active'))
+        );
+    }
+    
+    // 初始化并启动时间更新
+    updateTime();
+    setInterval(updateTime, 1000);
+}
+
+// ========== 实时时间 ==========
+function updateTime() {
+    const timeEl = document.getElementById('currentTime');
+    if (!timeEl) return;
+    
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const date = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    
+    const days = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+    const day = days[now.getDay()];
+
+    timeEl.textContent = `${year}-${month}-${date} ${hours}:${minutes}:${seconds} ${day}`;
 }
 
 // ========== 滚动渐入 ==========

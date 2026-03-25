@@ -62,14 +62,29 @@ a {
     top: 0;
     left: 0;
     width: 100%;
-    padding: 16px 40px;
+    padding: 12px 40px; /* 稍微减少上下内边距，给内容留出更多空间 */
+    height: 75px; /* 增加默认高度，确保两行文字都能显示完整 */
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start; /* 改为顶部对齐，防止展开时内容下移 */
     z-index: 1000;
-    background: rgba(10, 10, 26, 0.85);
+    background-color: rgba(10, 10, 26, 0.85); /* 默认背景色 */
+    background-size: cover;
+    background-position: center 20%; /* 调整背景图位置，让主体稍微偏上 */
+    background-repeat: no-repeat;
     backdrop-filter: blur(12px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: height 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); /* 平滑过渡动画 */
+    overflow: hidden; /* 防止展开时内容溢出 */
+}
+
+/* 鼠标悬停时导航栏变高 */
+.navbar:hover {
+    height: 180px; /* 展开后的高度 */
+}
+
+.navbar > * {
+    margin-top: 8px; /* 补偿因为 align-items: flex-start 带来的垂直偏移，使其看起来居中 */
 }
 
 .nav-logo {
@@ -77,6 +92,16 @@ a {
     font-weight: 700;
     color: #fff;
     letter-spacing: 1px;
+    display: flex;
+    flex-direction: column;
+}
+
+.nav-time {
+    font-size: 0.7rem;
+    font-weight: normal;
+    color: rgba(255, 255, 255, 0.7);
+    margin-top: 2px;
+    letter-spacing: 0;
 }
 
 .nav-links {
