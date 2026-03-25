@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理面板 - 编辑我的网站</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: #0f0f23;
+            color: #d0d0d0;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .container { max-width: 700px; margin: 0 auto; }
+        h1 {
+            font-size: 1.5rem;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        .tip {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 32px;
+        }
+        h2 {
+            font-size: 1.1rem;
+            color: #a855f7;
+            margin: 32px 0 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        label {
+            display: block;
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-bottom: 4px;
+            margin-top: 12px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.04);
+            color: #e0e0e0;
+            font-size: 0.9rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        input:focus, textarea:focus {
+            border-color: #a855f7;
+        }
+        textarea { resize: vertical; min-height: 60px; }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: #a855f7;
+            color: #fff;
+        }
+        .btn-primary:hover { background: #9333ea; }
+        .btn-add {
+            background: rgba(78, 205, 196, 0.15);
+            color: #4ecdc4;
+            border: 1px solid rgba(78, 205, 196, 0.3);
+            margin-top: 12px;
+        }
+        .btn-add:hover { background: rgba(78, 205, 196, 0.25); }
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 6px 14px;
+            font-size: 0.8rem;
+        }
+        .btn-danger:hover { background: rgba(239, 68, 68, 0.25); }
+        .btn-export {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        .btn-export:hover { background: rgba(59, 130, 246, 0.25); }
+
+        .item-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 12px;
+            position: relative;
+        }
+        .item-card .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .item-card .item-num {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .link-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .link-row input { flex: 1; }
+
+        .save-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 16px 20px;
+            background: rgba(15, 15, 35, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            z-index: 100;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            z-index: 200;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .toast-success { background: rgba(78, 205, 196, 0.2); color: #4ecdc4; border: 1px solid rgba(78, 205, 196, 0.3); }
+        .toast-info { background: rgba(59, 130, 246, 0.2); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
+
+        .spacer { height: 80px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>管理面板</h1>
+        <p class="tip">在这里编辑你的个人信息、作品和笔记，点保存后打开 index.html 就能看到效果。</p>
+
+        <!-- 个人信息 -->
+        <h2>个人信息</h2>
+        <label>名字</label>
+        <input type="text" id="profileName" placeholder="你的名字">
+
+        <label>一句话介绍</label>
+        <input type="text" id="profileBio" placeholder="比如：一个喜欢折腾的学生">
+
+        <label>头像图片（可选，填文件名如 avatar.jpg，把图片放在同一文件夹下）</label>
+        <input type="text" id="profileAvatar" placeholder="avatar.jpg">
+
+        <h2>社交链接（可选）</h2>
+        <div id="linksContainer"></div>
+        <button class="btn btn-add" onclick="addLink()">+ 添加链接</button>
+
+        <!-- 作品 -->
+        <h2>作品</h2>
+        <div id="worksContainer"></div>
+        <button class="btn btn-add" onclick="addWork()">+ 添加作品</button>
+
+        <!-- 笔记 -->
+        <h2>笔记</h2>
+        <div id="notesContainer"></div>
+        <button class="btn btn-add" onclick="addNote()">+ 添加笔记</button>
+
+        <div class="spacer"></div>
+    </div>
+
+    <!-- 底部操作栏 -->
+    <div class="save-bar">
+        <button class="btn btn-primary" onclick="saveData()">保存</button>
+        <button class="btn btn-export" onclick="exportData()">导出为文件</button>
+        <button class="btn btn-export" onclick="importData()">从文件导入</button>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <input type="file" id="importFile" accept=".js,.json" style="display:none">
+
+    <script>
+        // ========== 数据 ==========
+        let data = {
+            profile: {
+                name: '你的名字',
+                bio: '这是一个热爱编程和设计的开发者，欢迎来到我的个人主页！',
+                avatar: '',
+                links: [
+                    { label: 'GitHub', url: 'https://github.com/' },
+                    { label: '我的博客', url: '#' }
+                ]
+            },
+            works: [
+                {
+                    title: '示例作品：个人主页',
+                    desc: '这是我的第一个个人主页项目，使用了 HTML、CSS 和 JavaScript 构建，包含响应式设计和炫酷的粒子特效。',
+                    link: '#',
+                    date: '2026-03-25',
+                    tags: ['HTML', 'CSS', 'JS']
+                }
+            ],
+            notes: [
+                {
+                    title: '我的第一篇博客',
+                    desc: '今天我建立了自己的个人主页，非常开心！接下来我会在这里分享我的学习笔记和技术心得。',
+                    link: '#',
+                    date: '2026-03-25',
+                    tags: ['生活', '随笔']
+                }
+            ]
+        };
+
+        // 加载已有数据
+        function init() {
+            try {
+                const raw = localStorage.getItem('siteData');
+                if (raw) data = JSON.parse(raw);
+            } catch(e) {}
+
+            document.getElementById('profileName').value = data.profile.name || '';
+            document.getElementById('profileBio').value = data.profile.bio || '';
+            document.getElementById('profileAvatar').value = data.profile.avatar || '';
+
+            renderLinks();
+            renderWorks();
+            renderNotes();
+        }
+
+        // ========== 社交链接 ==========
+        function renderLinks() {
+            const c = document.getElementById('linksContainer');
+            c.innerHTML = '';
+            (data.profile.links || []).forEach((link, i) => {
+                c.innerHTML += '<div class="link-row">' +
+                    '<input type="text" placeholder="名称（如 GitHub）" value="' + esc(link.label) + '" onchange="updateLink(' + i + ',\'label\',this.value)">' +
+                    '<input type="text" placeholder="网址" value="' + esc(link.url) + '" onchange="updateLink(' + i + ',\'url\',this.value)">' +
+                    '<button class="btn btn-danger" onclick="removeLink(' + i + ')">删除</button>' +
+                    '</div>';
+            });
+        }
+
+        function addLink() {
+            if (!data.profile.links) data.profile.links = [];
+            data.profile.links.push({ label: '', url: '' });
+            renderLinks();
+        }
+
+        function updateLink(i, key, val) {
+            data.profile.links[i][key] = val;
+        }
+
+        function removeLink(i) {
+            data.profile.links.splice(i, 1);
+            renderLinks();
+        }
+
+        // ========== 作品 ==========
+        function renderWorks() {
+            const c = document.getElementById('worksContainer');
+            c.innerHTML = '';
+            data.works.forEach((w, i) => {
+                c.innerHTML += itemCard('work', i, w);
+            });
+        }
+
+        function addWork() {
+            data.works.push({ title: '', desc: '', link: '', date: '', tags: [] });
+            renderWorks();
+        }
+
+        function removeWork(i) {
+            data.works.splice(i, 1);
+            renderWorks();
+        }
+
+        function updateWork(i, key, val) {
+            if (key === 'tags') {
+                data.works[i].tags = val.split(/[,，、\s]+/).filter(Boolean);
+            } else {
+                data.works[i][key] = val;
+            }
+        }
+
+        // ========== 笔记 ==========
+        function renderNotes() {
+            const c = document.getElementById('notesContainer');
+            c.innerHTML = '';
+            data.notes.forEach((n, i) => {
+                c.innerHTML += itemCard('note', i, n);
+            });
+        }
+
+        function addNote() {
+            data.notes.push({ title: '', desc: '', link: '', date: '', tags: [] });
+            renderNotes();
+        }
+
+        function removeNote(i) {
+            data.notes.splice(i, 1);
+            renderNotes();
+        }
+
+        function updateNote(i, key, val) {
+            if (key === 'tags') {
+                data.notes[i].tags = val.split(/[,，、\s]+/).filter(Boolean);
+            } else {
+                data.notes[i][key] = val;
+            }
+        }
+
+        // ========== 通用卡片模板 ==========
+        function itemCard(type, i, item) {
+            const fn = type === 'work' ? 'Work' : 'Note';
+            return '<div class="item-card">' +
+                '<div class="item-header">' +
+                    '<span class="item-num">#' + (i + 1) + '</span>' +
+                    '<button class="btn btn-danger" onclick="remove' + fn + '(' + i + ')">删除</button>' +
+                '</div>' +
+                '<label>标题</label>' +
+                '<input type="text" value="' + esc(item.title) + '" onchange="update' + fn + '(' + i + ',\'title\',this.value)">' +
+                '<label>描述</label>' +
+                '<textarea onchange="update' + fn + '(' + i + ',\'desc\',this.value)">' + esc(item.desc) + '</textarea>' +
+                '<label>链接（可选，填网址或文件名如 notes/my-note.html）</label>' +
+                '<input type="text" value="' + esc(item.link) + '" onchange="update' + fn + '(' + i + ',\'link\',this.value)">' +
+                '<label>日期（可选）</label>' +
+                '<input type="text" value="' + esc(item.date) + '" placeholder="2026-03-25" onchange="update' + fn + '(' + i + ',\'date\',this.value)">' +
+                '<label>标签（可选，用逗号分隔）</label>' +
+                '<input type="text" value="' + esc((item.tags || []).join(', ')) + '" onchange="update' + fn + '(' + i + ',\'tags\',this.value)">' +
+                '</div>';
+        }
+
+        // ========== 保存 / 导出 / 导入 ==========
+        function saveData() {
+            // 先从输入框收集最新的 profile 数据
+            data.profile.name = document.getElementById('profileName').value;
+            data.profile.bio = document.getElementById('profileBio').value;
+            data.profile.avatar = document.getElementById('profileAvatar').value;
+
+            localStorage.setItem('siteData', JSON.stringify(data));
+            showToast('已保存！打开 index.html 查看效果', 'success');
+        }
+
+        function exportData() {
+            saveData();
+            // 改为导出 config.js，这样能 100% 解决 GitHub Pages 读取不到数据的问题
+            const fileContent = 'window.SITE_DATA = ' + JSON.stringify(data, null, 2) + ';';
+            const blob = new Blob([fileContent], { type: 'application/javascript' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'config.js';
+            a.click();
+            URL.revokeObjectURL(a.href);
+            showToast('已导出 config.js', 'info');
+        }
+
+        function importData() {
+            document.getElementById('importFile').click();
+        }
+
+        document.getElementById('importFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                try {
+                    let text = ev.target.result;
+                    // 兼容读取 config.js 或者旧的 site-data.json
+                    if (text.indexOf('window.SITE_DATA =') !== -1) {
+                        text = text.replace('window.SITE_DATA =', '').trim();
+                        if (text.endsWith(';')) text = text.slice(0, -1);
+                    }
+                    data = JSON.parse(text);
+                    localStorage.setItem('siteData', JSON.stringify(data));
+                    init();
+                    showToast('导入成功！', 'success');
+                } catch(err) {
+                    showToast('文件格式错误', 'info');
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        });
+
+        // ========== 工具 ==========
+        function esc(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        function showToast(msg, type) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast toast-' + type + ' show';
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        init();
+    </script>
+</body>
+</html>
