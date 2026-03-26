@@ -63,7 +63,7 @@ a {
     left: 0;
     width: 100%;
     padding: 12px 40px; /* 稍微减少上下内边距，给内容留出更多空间 */
-    height: 75px; /* 增加默认高度，确保两行文字都能显示完整 */
+    height: 85px; /* 进一步增加默认高度，为大字体时间留出空间 */
     display: flex;
     justify-content: space-between;
     align-items: flex-start; /* 改为顶部对齐，防止展开时内容下移 */
@@ -97,11 +97,11 @@ a {
 }
 
 .nav-time {
-    font-size: 0.7rem;
-    font-weight: normal;
-    color: rgba(255, 255, 255, 0.7);
-    margin-top: 2px;
-    letter-spacing: 0;
+    font-size: 1.1rem; /* 显著放大字体 */
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.85); /* 稍微调亮一点，增加可读性 */
+    margin-top: 4px; /* 稍微增加与上方标题的间距 */
+    letter-spacing: 0.5px; /* 增加一点字间距显得更清晰 */
     cursor: pointer;
     transition: color 0.3s;
 }
@@ -118,7 +118,8 @@ a {
 }
 
 .nav-links a {
-    font-size: 0.9rem;
+    font-size: 1.1rem; /* 增大字体，从0.9rem改为1.1rem */
+    font-weight: 500;  /* 稍微加粗一点 */
     color: var(--text-light);
     transition: color 0.3s;
 }

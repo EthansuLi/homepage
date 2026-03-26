@@ -299,33 +299,38 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.15 });
 
 // ========== 弹幕留言逻辑 ==========
-let danmakuList = [
-    "前排占座！",
-    "博主太强了吧！",
-    "膜拜大佬~",
-    "这界面太好看了",
-    "哈基米哈基米",
-    "学习了！",
-    "二次元浓度过高警告"
-];
+let danmakuList = [];
+
+// 如果你想在这一次加载时强制清空旧的本地弹幕数据，可以取消下面这行的注释
+// localStorage.removeItem('site_danmaku');
 
 function initDanmaku() {
     const container = document.getElementById('danmaku-container');
     if (!container) return;
     container.innerHTML = ''; // 清空提示
     
-    // 从 localStorage 加载历史留言（真实场景需后端数据库，这里仅做纯前端模拟）
+    // 这里我们直接强行清空一次，确保不会有之前默认存进去的残留数据
+    // 我们在此次执行时主动清空，下次刷新如果不需要再清空，可将此行注释
+    localStorage.removeItem('site_danmaku');
+    danmakuList = [];
+
+    // 从 localStorage 加载历史留言
     try {
         const saved = localStorage.getItem('site_danmaku');
         if (saved) {
-            danmakuList = danmakuList.concat(JSON.parse(saved));
+            danmakuList = JSON.parse(saved);
         }
     } catch(e){}
 
     // 随机发射初始弹幕
-    danmakuList.forEach((text, i) => {
-        setTimeout(() => createDanmaku(text), Math.random() * 5000 + i * 800);
-    });
+    if (danmakuList.length > 0) {
+        danmakuList.forEach((text, i) => {
+            setTimeout(() => createDanmaku(text), Math.random() * 5000 + i * 800);
+        });
+    } else {
+        // 如果一条弹幕都没有，显示一个友好的提示
+        container.innerHTML = '<div class="empty-hint" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255,255,255,0.3);">还没有人留言，快来发第一条弹幕吧！</div>';
+    }
 }
 
 function createDanmaku(text, isNew = false) {
@@ -349,9 +354,10 @@ function createDanmaku(text, isNew = false) {
         el.style.zIndex = '10'; // 保证新弹幕在最上层
     }
     
-    // 随机好看的颜色
+    // 随机好看的颜色（修复颜色不显示的问题，确保是合法的 CSS 颜色字符串）
     const colors = ['#ff758f', '#845ef7', '#3bc9db', '#fcc419', '#51cf66', '#ff922b', '#ffffff'];
-    el.style.color = colors[Math.floor(Math.random() * colors.length)];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    el.style.color = randomColor;
     
     // 随机高度 (10% 到 85%)
     el.style.top = (Math.random() * 75 + 10) + '%';
@@ -383,19 +389,22 @@ function createDanmaku(text, isNew = false) {
 // 确保函数暴露在全局作用域，以便 HTML 中的 onclick="sendDanmaku()" 能够调用
 window.sendDanmaku = function() {
     const input = document.getElementById('danmakuInput');
+    if (!input) return;
     const text = input.value.trim();
     if (!text) return;
     
-    // 发射当前这条弹幕，并标记为 isNew = true
-    createDanmaku(text, true);
+    // 如果有“还没有人留言”的提示，先移除它
+    const container = document.getElementById('danmaku-container');
+    if (container) {
+        const hint = container.querySelector('.empty-hint');
+        if (hint) hint.remove();
+    }
+
+    createDanmaku(text, true); // 立即显示，并标记为新弹幕（会加方框高亮）
     
-    // 保存到列表和本地
+    // 保存到本地（真实场景需调接口）
     danmakuList.push(text);
-    try {
-        const saved = JSON.parse(localStorage.getItem('site_danmaku') || '[]');
-        saved.push(text);
-        localStorage.setItem('site_danmaku', JSON.stringify(saved));
-    } catch(e){}
+    localStorage.setItem('site_danmaku', JSON.stringify(danmakuList));
     
     input.value = '';
 };
