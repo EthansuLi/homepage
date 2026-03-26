@@ -15,6 +15,7 @@ function loadData() {
     // 3. 兜底数据
     return {
         profile: {
+            siteTitle: '✨ Ethansu Li 的博客',
             name: '你的名字',
             bio: '这是一个热爱编程和设计的开发者，欢迎来到我的个人主页！',
             avatar: '',
@@ -62,6 +63,13 @@ function loadData() {
 function renderProfile(data) {
     if (!data || !data.profile) return;
     const p = data.profile;
+
+    // 动态渲染网站标题
+    if (p.siteTitle) {
+        document.title = p.siteTitle;
+    } else if (p.name && p.name !== '你的名字') {
+        document.title = p.name + ' 的宇宙';
+    }
 
     if (p.name) document.getElementById('myName').textContent = p.name;
     if (p.bio) {
@@ -438,3 +446,121 @@ document.addEventListener('DOMContentLoaded', () => {
         observer.observe(el);
     });
 });
+
+// ========== 彩蛋：别点我 ==========
+let fwCanvas, fwCtx, fireworks = [];
+
+window.handleDontClick = function() {
+    const btn = document.getElementById('dontClickBtn');
+    if (!btn) return;
+
+    // 每次点击随机触发特效（全屏随机颜色烟花 或 粑粑）
+    triggerRandomEffect();
+
+    // 增加一个轻微的点击缩放反馈，让点击更有手感
+    btn.style.transform = "scale(0.85)";
+    setTimeout(() => {
+        btn.style.transform = "none";
+    }, 150);
+};
+
+// 随机触发特效
+function triggerRandomEffect() {
+    if (Math.random() > 0.5) {
+        shootFirework();
+    } else {
+        throwPoop();
+    }
+}
+
+// 扔大便特效
+function throwPoop() {
+    const poop = document.createElement('div');
+    poop.textContent = '💩';
+    poop.className = 'poop-splat';
+    
+    // 随机位置，保证不会太靠近边缘被切断
+    const x = Math.random() * (window.innerWidth - 150) + 50;
+    const y = Math.random() * (window.innerHeight - 150) + 50;
+    
+    poop.style.left = x + 'px';
+    poop.style.top = y + 'px';
+    
+    // 随机旋转角度让粑粑方向不一样
+    const randomRotation = Math.random() * 360;
+    poop.style.transform = `rotate(${randomRotation}deg)`;
+    
+    document.body.appendChild(poop);
+    
+    // 5秒后自动消失
+    setTimeout(() => {
+        poop.style.opacity = '0';
+        poop.style.transition = 'opacity 1s';
+        setTimeout(() => poop.remove(), 1000);
+    }, 5000);
+}
+
+// 全屏烟花特效逻辑
+function shootFirework() {
+    if (!fwCanvas) {
+        fwCanvas = document.createElement('canvas');
+        fwCanvas.id = 'fireworksCanvas';
+        document.body.appendChild(fwCanvas);
+        fwCtx = fwCanvas.getContext('2d');
+        
+        function resizeFw() {
+            fwCanvas.width = window.innerWidth;
+            fwCanvas.height = window.innerHeight;
+        }
+        resizeFw();
+        window.addEventListener('resize', resizeFw);
+        
+        function animateFw() {
+            fwCtx.clearRect(0, 0, fwCanvas.width, fwCanvas.height);
+            for (let i = fireworks.length - 1; i >= 0; i--) {
+                let p = fireworks[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.05; // 重力
+                p.life -= 0.02;
+                p.size *= 0.95;
+                
+                if (p.life <= 0) {
+                    fireworks.splice(i, 1);
+                    continue;
+                }
+                
+                fwCtx.beginPath();
+                fwCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                fwCtx.fillStyle = p.color;
+                fwCtx.globalAlpha = p.life;
+                fwCtx.fill();
+            }
+            fwCtx.globalAlpha = 1;
+            requestAnimationFrame(animateFw);
+        }
+        animateFw();
+    }
+
+    // 在随机位置生成一朵巨大的烟花
+    const startX = window.innerWidth * 0.1 + Math.random() * window.innerWidth * 0.8;
+    const startY = window.innerHeight * 0.1 + Math.random() * window.innerHeight * 0.5;
+    const colors = ['#ff758f', '#845ef7', '#3bc9db', '#fcc419', '#51cf66', '#ff0000', '#00ff00', '#ffff00'];
+    const fwColor = colors[Math.floor(Math.random() * colors.length)];
+    
+    // 增加粒子数量，提高爆炸范围和速度，让它布满屏幕
+    const particleCount = 150 + Math.random() * 100; // 150~250个粒子
+    for (let i = 0; i < particleCount; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 15 + 5; // 速度大大提升
+        fireworks.push({
+            x: startX,
+            y: startY,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 1.5 + Math.random() * 1, // 存活时间更长
+            size: Math.random() * 6 + 3, // 粒子更大
+            color: fwColor
+        });
+    }
+}

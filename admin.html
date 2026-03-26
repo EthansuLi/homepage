@@ -161,6 +161,9 @@
 
         <!-- 个人信息 -->
         <h2>个人信息</h2>
+        <label>网站标题（显示在浏览器标签页上的文字）</label>
+        <input type="text" id="profileSiteTitle" placeholder="✨ Ethansu Li 的博客">
+
         <label>名字</label>
         <input type="text" id="profileName" placeholder="你的名字">
 
@@ -204,6 +207,7 @@
         // ========== 数据 ==========
         let data = {
             profile: {
+                siteTitle: '✨ Ethansu Li 的博客',
                 name: '你的名字',
                 bio: '这是一个热爱编程和设计的开发者，欢迎来到我的个人主页！',
                 avatar: '',
@@ -240,6 +244,7 @@
                 if (raw) data = JSON.parse(raw);
             } catch(e) {}
 
+            document.getElementById('profileSiteTitle').value = data.profile.siteTitle || '✨ Ethansu Li 的博客';
             document.getElementById('profileName').value = data.profile.name || '';
             document.getElementById('profileBio').value = data.profile.bio || '';
             document.getElementById('profileAvatar').value = data.profile.avatar || '';
@@ -365,6 +370,7 @@
         // ========== 保存 / 导出 / 导入 ==========
         function saveData() {
             // 先从输入框收集最新的 profile 数据
+            data.profile.siteTitle = document.getElementById('profileSiteTitle').value;
             data.profile.name = document.getElementById('profileName').value;
             data.profile.bio = document.getElementById('profileBio').value;
             data.profile.avatar = document.getElementById('profileAvatar').value;

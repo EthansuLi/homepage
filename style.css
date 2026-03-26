@@ -29,6 +29,16 @@ body {
     overflow-x: hidden;
 }
 
+/* 页面旋转类 */
+body {
+    transition: transform 1s ease-in-out;
+    transform-origin: center center;
+    /* 避免旋转时出现空白边距，并且修复 fixed 背景错位 */
+}
+body.rotated {
+    transform: rotate(180deg);
+}
+
 /* 动态视频背景样式 */
 .bg-video {
     position: fixed;
@@ -38,6 +48,12 @@ body {
     height: 100vh;
     object-fit: cover; /* 保证视频填满整个屏幕不变形 */
     z-index: -2; /* 放在最底层，在毛玻璃遮罩（-1）的下面 */
+    transition: transform 1s ease-in-out; /* 让视频跟着 body 旋转方向一起同步，或者反向补偿 */
+}
+
+body.rotated .bg-video {
+    /* 修正视频位置，当body旋转时，fixed元素会受影响，我们让视频跟着一起转或者反向转 */
+    /* 因为视频是覆盖全屏的，直接跟着旋转也是合理的 */
 }
 
 /* 增加全屏深色毛玻璃遮罩，让动漫背景作为氛围图，保证网页正经且文字清晰可见 */
@@ -468,4 +484,61 @@ a {
     .nav-links.active { display: flex; }
     .nav-toggle { display: flex; }
     .section { padding: 60px 20px; }
+}
+
+/* ========== 彩蛋：别点我 ========== */
+.dont-click-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 1000;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+    transition: all 0.3s;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.dont-click-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+/* 烟花粒子画布 */
+#fireworksCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+/* 屏幕上的粑粑效果 */
+.poop-splat {
+    position: fixed;
+    font-size: 8rem;
+    z-index: 9998;
+    pointer-events: none;
+    transform: scale(0);
+    animation: splat 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+}
+
+@keyframes splat {
+    0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+    50% { transform: scale(1.2) rotate(10deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
