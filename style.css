@@ -65,8 +65,9 @@ a {
     padding: 12px 40px; /* 稍微减少上下内边距，给内容留出更多空间 */
     height: 85px; /* 进一步增加默认高度，为大字体时间留出空间 */
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start; /* 改为顶部对齐，防止展开时内容下移 */
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch; 
     z-index: 1000;
     background-color: rgba(10, 10, 26, 0.85); /* 默认背景色 */
     background-size: cover;
@@ -75,7 +76,7 @@ a {
     backdrop-filter: blur(12px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     transition: height 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); /* 平滑过渡动画 */
-    overflow: hidden; /* 防止展开时内容溢出 */
+    overflow: hidden;
 }
 
 /* 鼠标悬停时导航栏变高 */
@@ -83,7 +84,15 @@ a {
     height: 180px; /* 展开后的高度 */
 }
 
-.navbar > * {
+/* 导航栏第一行（Logo和链接） */
+.nav-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.nav-top-row > * {
     margin-top: 8px; /* 补偿因为 align-items: flex-start 带来的垂直偏移，使其看起来居中 */
 }
 

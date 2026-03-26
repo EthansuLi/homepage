@@ -419,7 +419,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-
 // ========== 初始化 ==========
 document.addEventListener('DOMContentLoaded', () => {
     const data = loadData();
